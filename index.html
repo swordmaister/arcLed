@@ -110,33 +110,36 @@
             inset 0 0 5px rgba(255,255,255,0.5);
     }
 
+    /* ▼▼▼▼▼ 修正箇所はここです ▼▼▼▼▼ */
     /* プレス用の特別なLEDスタイル */
     .led.press-active {
-        background: #00ff88;
-        border: 1px solid #00ff88; /* 光った時だけ枠線表示 */
-        color: #00ff88;
-        opacity: 1; /* 光った時に表示 */
+        /* 緑色固定だった部分を、JSから受け取る変数に変更 */
+        background: var(--press-color);
+        border: 1px solid var(--press-color);
+        color: var(--press-color);
+        opacity: 1;
         box-shadow: 
-            0 0 20px #00ff88,
-            0 0 35px #00ff88,
+            0 0 20px var(--press-color),
+            0 0 35px var(--press-color),
             inset 0 0 8px rgba(255,255,255,0.3);
     }
 
     .led.press-active::before {
-        background: #00ff88;
+        background: var(--press-color);
         opacity: 0.3;
         box-shadow: 
-            0 0 25px #00ff88,
-            0 0 40px #00ff88;
+            0 0 25px var(--press-color),
+            0 0 40px var(--press-color);
     }
 
     .led.press-active::after {
-        background: #00ff88;
-        opacity: 1; /* 光った時に表示 */
+        background: var(--press-color);
+        opacity: 1;
         box-shadow: 
-            0 0 10px #00ff88,
+            0 0 10px var(--press-color),
             inset 0 0 5px rgba(255,255,255,0.5);
     }
+    /* ▲▲▲▲▲ 修正箇所はここまでです ▲▲▲▲▲ */
 
     .led.red { color: #ff4444; }
     .led.orange { color: #ff8800; }
