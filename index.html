@@ -712,7 +712,7 @@
         pattern8_Random() {
             let step = 0;
             const totalSteps = 18;
-            const stepDuration = 3000 / totalSteps;
+            const stepDuration = 3000 / (totalSteps + 1 );
             const indices = Array.from({length: 18}, (_, i) => i).sort(() => Math.random() - 0.5);
 
             this.pressAnimationId = setInterval(() => {
