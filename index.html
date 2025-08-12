@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>arcLedR</title>
+    <title>arcLedRN</title>
     <style>
         body {
             user-select: none;
@@ -19,6 +19,7 @@
             overflow: hidden;
         }
 
+```
     .device-container {
         position: absolute;
         top: 50%;
@@ -49,10 +50,11 @@
         width: 8px;
         height: 25px;
         border-radius: 2px;
-        background: #222;
-        border: 1px solid #444;
+        background: transparent; /* 完全に透明に */
+        border: none; /* 枠線を削除 */
         transition: all 0.3s ease;
         transform-origin: center center;
+        opacity: 0; /* 初期状態は見えない */
     }
 
     .led::before {
@@ -65,6 +67,7 @@
         border-radius: 3px;
         background: transparent;
         transition: all 0.3s ease;
+        opacity: 0; /* 初期状態は見えない */
     }
 
     .led::after {
@@ -75,13 +78,15 @@
         width: 6px;
         height: 21px;
         border-radius: 1px;
-        background: #333;
+        background: transparent; /* 透明に */
         transition: all 0.3s ease;
+        opacity: 0; /* 初期状態は見えない */
     }
 
     .led.active {
         background: currentColor;
-        border-color: currentColor;
+        border: 1px solid currentColor; /* 光った時だけ枠線表示 */
+        opacity: 1; /* 光った時に表示 */
         box-shadow: 
             0 0 20px currentColor,
             0 0 35px currentColor,
@@ -98,6 +103,7 @@
 
     .led.active::after {
         background: currentColor;
+        opacity: 1; /* 光った時に表示 */
         box-shadow: 
             0 0 10px currentColor,
             inset 0 0 5px rgba(255,255,255,0.5);
@@ -106,8 +112,9 @@
     /* プレス用の特別なLEDスタイル */
     .led.press-active {
         background: #00ff88;
-        border-color: #00ff88;
+        border: 1px solid #00ff88; /* 光った時だけ枠線表示 */
         color: #00ff88;
+        opacity: 1; /* 光った時に表示 */
         box-shadow: 
             0 0 20px #00ff88,
             0 0 35px #00ff88,
@@ -124,6 +131,7 @@
 
     .led.press-active::after {
         background: #00ff88;
+        opacity: 1; /* 光った時に表示 */
         box-shadow: 
             0 0 10px #00ff88,
             inset 0 0 5px rgba(255,255,255,0.5);
@@ -286,7 +294,37 @@
         background: linear-gradient(145deg, #fff, #f0f0f0);
     }
 
-    /* 隠し回転ボタン */
+    /* アニメーションパターン表示（読み取り専用） */
+    .animation-display {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(0,0,0,0.85);
+        padding: 8px 12px;
+        border-radius: 15px;
+        border: 2px solid #444;
+        backdrop-filter: blur(10px);
+        box-shadow: 
+            0 4px 12px rgba(0,0,0,0.7),
+            inset 0 1px 3px rgba(255,255,255,0.15);
+        z-index: 1000;
+        text-align: center;
+    }
+
+    .animation-display .pattern-name {
+        color: #00ff88;
+        font-size: 11px;
+        font-weight: bold;
+        margin-bottom: 2px;
+    }
+
+    .animation-display .pattern-color {
+        width: 20px;
+        height: 6px;
+        border-radius: 3px;
+        margin: 0 auto;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
     #rotation-button {
         position: fixed;
         bottom: 25px;
@@ -324,7 +362,7 @@
     .reset-button { display: none; }
     .press-text { display: none; }
 </style>
-
+```
 
 </head>
 <body>
@@ -360,6 +398,23 @@
             this.isPressing = false;
             this.isRandomMode = false;
             this.pressAnimationId = null;
+            this.animationPattern = 1; // デフォルトパターン
+            this.pressColors = [
+                '#00ff88', // 緑
+                '#ff4444', // 赤
+                '#4444ff', // 青
+                '#ff8800', // オレンジ
+                '#ffdd00', // 黄色
+                '#aa44ff', // 紫
+                '#00ffff', // シアン
+                '#ff00ff', // マゼンタ
+                '#ffffff', // 白
+                '#ffaa00'  // ゴールド
+            ];
+            this.patternNames = [
+                'LEFT→RIGHT', 'RIGHT→LEFT', 'CENTER→OUT', 'OUT→CENTER', 
+                'SEQUENTIAL', 'REVERSE', 'WAVE', 'RANDOM', 'PULSE', 'LIGHTNING'
+            ];
             this.startButton = document.getElementById('startButton');
             this.modeSwitch = document.getElementById('modeSwitch');
             this.modeIndicator = document.getElementById('modeIndicator');
@@ -453,16 +508,44 @@
                 led.classList.remove('press-active', 'active');
             });
 
+            // ランダムにパターンと色を選択
+            const randomPattern = Math.floor(Math.random() * 10) + 1;
+            const randomColor = this.pressColors[Math.floor(Math.random() * this.pressColors.length)];
+            
+            // 各LEDに個別に色を設定
+            this.leds.forEach(led => {
+                led.style.setProperty('--press-color', randomColor);
+            });
+            
+            console.log(`ランダムパターン: ${randomPattern} (${this.patternNames[randomPattern-1]}), 色: ${randomColor}`);
+
+            // パターンに応じてアニメーション実行
+            switch(randomPattern) {
+                case 1: this.pattern1_LeftRight(); break;
+                case 2: this.pattern2_RightLeft(); break;
+                case 3: this.pattern3_CenterOut(); break;
+                case 4: this.pattern4_OutCenter(); break;
+                case 5: this.pattern5_Sequential(); break;
+                case 6: this.pattern6_ReverseSequential(); break;
+                case 7: this.pattern7_Wave(); break;
+                case 8: this.pattern8_Random(); break;
+                case 9: this.pattern9_Pulse(); break;
+                case 10: this.pattern10_Lightning(); break;
+                default: this.pattern1_LeftRight(); break;
+            }
+        }
+
+        // updateAnimationDisplay メソッドを削除
+
+        // パターン1: 左右から中央へ（元のパターン）
+        pattern1_LeftRight() {
             let step = 0;
-            const totalSteps = 9; // 中央まで9ステップ
-            const animationDuration = 3000; // 3秒
-            const stepDuration = animationDuration / (totalSteps + 1); // +1で最後まで確実に
+            const totalSteps = 9;
+            const stepDuration = 3000 / (totalSteps + 1);
 
             this.pressAnimationId = setInterval(() => {
-                if (step <= totalSteps) { // <= に変更して最後まで点灯
-                    // 左端から右に向かって点灯 (インデックス0から9まで)
+                if (step <= totalSteps) {
                     const leftIndex = step;
-                    // 右端から左に向かって点灯 (インデックス17から8まで)
                     const rightIndex = 17 - step;
                     
                     if (leftIndex < 18) {
@@ -474,11 +557,225 @@
                     
                     step++;
                     
-                    // 中央でぶつかった時（step 9で leftIndex=9, rightIndex=8）
                     if (step > totalSteps) {
                         clearInterval(this.pressAnimationId);
                         this.pressAnimationId = null;
                     }
+                }
+            }, stepDuration);
+        }
+
+        // パターン2: 右左から中央へ
+        pattern2_RightLeft() {
+            let step = 0;
+            const totalSteps = 9;
+            const stepDuration = 3000 / (totalSteps + 1);
+
+            this.pressAnimationId = setInterval(() => {
+                if (step <= totalSteps) {
+                    const rightIndex = step;
+                    const leftIndex = 17 - step;
+                    
+                    if (rightIndex < 18) {
+                        this.leds[rightIndex].classList.add('press-active');
+                    }
+                    if (leftIndex >= 0 && leftIndex !== rightIndex) {
+                        this.leds[leftIndex].classList.add('press-active');
+                    }
+                    
+                    step++;
+                    
+                    if (step > totalSteps) {
+                        clearInterval(this.pressAnimationId);
+                        this.pressAnimationId = null;
+                    }
+                }
+            }, stepDuration);
+        }
+
+        // パターン3: 中央から外側へ
+        pattern3_CenterOut() {
+            let step = 0;
+            const totalSteps = 9;
+            const stepDuration = 3000 / (totalSteps + 1);
+
+            this.pressAnimationId = setInterval(() => {
+                if (step <= totalSteps) {
+                    const centerLeft = 8 - step;
+                    const centerRight = 9 + step;
+                    
+                    if (centerLeft >= 0) {
+                        this.leds[centerLeft].classList.add('press-active');
+                    }
+                    if (centerRight < 18) {
+                        this.leds[centerRight].classList.add('press-active');
+                    }
+                    
+                    step++;
+                    
+                    if (step > totalSteps) {
+                        clearInterval(this.pressAnimationId);
+                        this.pressAnimationId = null;
+                    }
+                }
+            }, stepDuration);
+        }
+
+        // パターン4: 外側から中央へ（両端スタート）
+        pattern4_OutCenter() {
+            let step = 0;
+            const totalSteps = 9;
+            const stepDuration = 3000 / (totalSteps + 1);
+
+            this.pressAnimationId = setInterval(() => {
+                if (step <= totalSteps) {
+                    const leftIndex = step;
+                    const rightIndex = 17 - step;
+                    
+                    if (leftIndex < 18 && rightIndex >= 0) {
+                        this.leds[leftIndex].classList.add('press-active');
+                        if (leftIndex !== rightIndex) {
+                            this.leds[rightIndex].classList.add('press-active');
+                        }
+                    }
+                    
+                    step++;
+                    
+                    if (step > totalSteps) {
+                        clearInterval(this.pressAnimationId);
+                        this.pressAnimationId = null;
+                    }
+                }
+            }, stepDuration);
+        }
+
+        // パターン5: 順次点灯
+        pattern5_Sequential() {
+            let step = 0;
+            const stepDuration = 3000 / 18;
+
+            this.pressAnimationId = setInterval(() => {
+                if (step < 18) {
+                    this.leds[step].classList.add('press-active');
+                    step++;
+                } else {
+                    clearInterval(this.pressAnimationId);
+                    this.pressAnimationId = null;
+                }
+            }, stepDuration);
+        }
+
+        // パターン6: 逆順次点灯
+        pattern6_ReverseSequential() {
+            let step = 0;
+            const stepDuration = 3000 / 18;
+
+            this.pressAnimationId = setInterval(() => {
+                if (step < 18) {
+                    this.leds[17 - step].classList.add('press-active');
+                    step++;
+                } else {
+                    clearInterval(this.pressAnimationId);
+                    this.pressAnimationId = null;
+                }
+            }, stepDuration);
+        }
+
+        // パターン7: 波動
+        pattern7_Wave() {
+            let cycle = 0;
+            const cycles = 6;
+            const cycleTime = 3000 / cycles;
+
+            this.pressAnimationId = setInterval(() => {
+                // 前の点灯をクリア
+                this.leds.forEach(led => led.classList.remove('press-active'));
+                
+                // 波の位置を計算
+                const wavePosition = (cycle * 3) % 18;
+                for (let i = 0; i < 3; i++) {
+                    const index = (wavePosition + i) % 18;
+                    this.leds[index].classList.add('press-active');
+                }
+                
+                cycle++;
+                
+                if (cycle >= cycles) {
+                    // 最後は全点灯
+                    this.leds.forEach(led => led.classList.add('press-active'));
+                    clearInterval(this.pressAnimationId);
+                    this.pressAnimationId = null;
+                }
+            }, cycleTime);
+        }
+
+        // パターン8: ランダム
+        pattern8_Random() {
+            let step = 0;
+            const totalSteps = 18;
+            const stepDuration = 3000 / totalSteps;
+            const indices = Array.from({length: 18}, (_, i) => i).sort(() => Math.random() - 0.5);
+
+            this.pressAnimationId = setInterval(() => {
+                if (step < totalSteps) {
+                    this.leds[indices[step]].classList.add('press-active');
+                    step++;
+                } else {
+                    clearInterval(this.pressAnimationId);
+                    this.pressAnimationId = null;
+                }
+            }, stepDuration);
+        }
+
+        // パターン9: パルス（全体が点滅）
+        pattern9_Pulse() {
+            let pulseCount = 0;
+            const totalPulses = 6;
+            const pulseTime = 3000 / (totalPulses * 2);
+
+            this.pressAnimationId = setInterval(() => {
+                if (pulseCount % 2 === 0) {
+                    this.leds.forEach(led => led.classList.add('press-active'));
+                } else {
+                    this.leds.forEach(led => led.classList.remove('press-active'));
+                }
+                
+                pulseCount++;
+                
+                if (pulseCount >= totalPulses * 2) {
+                    this.leds.forEach(led => led.classList.add('press-active'));
+                    clearInterval(this.pressAnimationId);
+                    this.pressAnimationId = null;
+                }
+            }, pulseTime);
+        }
+
+        // パターン10: 雷（ランダムな激しい点滅）
+        pattern10_Lightning() {
+            let step = 0;
+            const totalSteps = 20;
+            const stepDuration = 3000 / totalSteps;
+
+            this.pressAnimationId = setInterval(() => {
+                // 前の点灯をクリア
+                this.leds.forEach(led => led.classList.remove('press-active'));
+                
+                // ランダムに3-8個点灯
+                const count = 3 + Math.floor(Math.random() * 6);
+                const indices = Array.from({length: 18}, (_, i) => i)
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, count);
+                
+                indices.forEach(index => {
+                    this.leds[index].classList.add('press-active');
+                });
+                
+                step++;
+                
+                if (step >= totalSteps) {
+                    this.leds.forEach(led => led.classList.add('press-active'));
+                    clearInterval(this.pressAnimationId);
+                    this.pressAnimationId = null;
                 }
             }, stepDuration);
         }
@@ -498,6 +795,7 @@
             // プレス用のLEDクラスをすべて削除
             this.leds.forEach(led => {
                 led.classList.remove('press-active');
+                led.style.removeProperty('--press-color'); // 色もリセット
             });
             
             if (this.pressTimer) {
@@ -760,9 +1058,10 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
         }
-    ;
+    `;
     document.head.appendChild(style);
 </script>
+```
 
 </body>
 </html>
