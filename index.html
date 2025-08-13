@@ -385,6 +385,7 @@
 <div id="rotation-button" onclick="rotateScreen()"></div>
 
 <script>
+  document.onselectstart = () => false;
     class LEDSequence {
         constructor() {
             this.colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple'];
